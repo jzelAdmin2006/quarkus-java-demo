@@ -12,9 +12,6 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
       -
-        name: Set docker image name env
-        run: echo ::set-env name=DOCKER_IMAGE_NAME::jzeladmin2006/quarkus-java-demo
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       -
@@ -33,4 +30,4 @@ jobs:
           context: .
           file: ./src/main/docker/Dockerfile.native
           push: true
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:latest
+          tags: jzeladmin2006/quarkus-java-demo:latest
