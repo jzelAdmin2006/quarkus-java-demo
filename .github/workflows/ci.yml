@@ -1,0 +1,33 @@
+name: GraalVM Native Image builds for Quarkus
+on: [push, pull_request]
+jobs:
+  build:
+    name: Demo on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+      - name: Setup MSVC for Windows
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build natively on Windows
+        if: matrix.os == 'windows-latest'
+        run: ./gradlew quarkusBuild "-Dquarkus.package.type=native"
+      - name: Build natively on Unix
+        if: matrix.os != 'windows-latest'
+        run: ./gradlew quarkusBuild -Dquarkus.package.type=native
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-${{ matrix.os }}
+          path: |
+            build/quarkus-java-demo-1.0-SNAPSHOT-runner*
+            build/quarkus-artifact.properties
