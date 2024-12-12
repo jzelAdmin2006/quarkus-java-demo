@@ -19,4 +19,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: demo-${{ matrix.os }}
-          path: ./build/*
+          path: |
+            build/quarkus-java-demo-1.0-SNAPSHOT-runner.exe
+            build/quarkus-artifact.properties
