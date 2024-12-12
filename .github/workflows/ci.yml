@@ -18,8 +18,12 @@ jobs:
       - name: Setup MSVC for Windows
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
-      - name: Build natively
+      - name: Build natively on Windows
+        if: matrix.os == 'windows-latest'
         run: ./gradlew quarkusBuild "-Dquarkus.package.type=native"
+      - name: Build natively on Unix
+        if: matrix.os != 'windows-latest'
+        run: ./gradlew quarkusBuild -Dquarkus.package.type=native
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
