@@ -11,31 +11,37 @@ jobs:
             arch: x64
           - os: ubuntu-latest
             arch: ARM64
-          - os: ubuntu-latest
-            arch: ARMv7
-          - os: macos-latest
-            arch: x64
           - os: macos-latest
             arch: ARM64
+          - os: macos-13
+            arch: x64
           - os: windows-latest
             arch: x64
     steps:
       - uses: actions/checkout@v4
-      - uses: graalvm/setup-graalvm@v1
+      - name: Set up QEMU in case of Linux ARM64 (a GitHub-hosted ARM64 runner would currently be fee-based for Linux, see https://github.blog/news-insights/product-news/arm64-on-github-actions-powering-faster-more-efficient-build-systems/)
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'ARM64'
+        uses: docker/setup-qemu-action@v3
+      - name: Build natively in case of Linux ARM64
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'ARM64'
+        run: docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/home/gradle/project -w /home/gradle/project gradle:jdk21-graal ./gradlew quarkusBuild -Dquarkus.package.type=native
+      - name: Setup GraalVM
+        if: matrix.os != 'ubuntu-latest' || matrix.arch != 'ARM64'
+        uses: graalvm/setup-graalvm@v1
         with:
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
-      - name: Setup MSVC for Windows
+      - name: Setup MSVC in case of Windows
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
-      - name: Build natively on Windows
+      - name: Build natively in case of Windows
         if: matrix.os == 'windows-latest'
-        run: ./gradlew quarkusBuild "-Dquarkus.package.type=native" -Parch=${{ matrix.arch }}
-      - name: Build natively on Unix
-        if: matrix.os != 'windows-latest'
-        run: ./gradlew quarkusBuild -Dquarkus.package.type=native -Parch=${{ matrix.arch }}
+        run: ./gradlew quarkusBuild "-Dquarkus.package.type=native"
+      - name: Build natively in case of Unix
+        if: (matrix.os != 'ubuntu-latest' || matrix.arch != 'ARM64') && matrix.os != 'windows-latest'
+        run: ./gradlew quarkusBuild -Dquarkus.package.type=native
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
